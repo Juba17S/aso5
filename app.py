@@ -4,6 +4,7 @@ import requests
 import streamlit.components.v1 as components
 import random
 from datetime import datetime
+import pytz # لازم تضيف pytz في ملف requirements.txt
 
 # --- 1. إعدادات التنبيه (تليجرام) ---
 TOKEN = "8664972776:AAELmEwNi_NcOtKHb8va_16czNLtCJdBqLI"
@@ -30,9 +31,11 @@ def send_detailed_alert(action_type):
         elif "Chrome" in ua_string: browser = "كروم 🌐"
         elif "Safari" in ua_string: browser = "سفاري 🧭"
 
-        now = datetime.now().strftime("%I:%M %p")
+        # ج) ضبط الوقت المباشر بتوقيت بغداد 🇮🇶
+        iq_tz = pytz.timezone('Asia/Baghdad')
+        now_iq = datetime.now(iq_tz).strftime("%I:%M:%S %p") 
         
-        # ج) جلب العداد المحدث من الرابط
+        # د) جلب العداد المحدث من الرابط
         no_attempts = st.query_params.get("no_count", "0")
         
         if action_type == "open":
@@ -48,7 +51,7 @@ def send_detailed_alert(action_type):
             f"📍 **الموقع:** {location_info}\n"
             f"📱 **الجهاز:** {device}\n"
             f"🌐 **المتصفح:** {browser}\n"
-            f"⏰ **الوقت:** {now}{stats}\n\n"
+            f"⏰ **توقيت بغداد:** {now_iq}{stats}\n\n"
             f"📝 **بيان المتصفح:**\n`{ua_string[:60]}...`"
         )
         
@@ -66,7 +69,7 @@ if 'notified' not in st.session_state:
 
 st.set_page_config(page_title="معايدة فقط لكِ😀", page_icon="⭐")
 
-# --- دالة حماية الـ Lottie من الخطأ (JSONDecodeError) ---
+# --- دالة حماية الـ Lottie من الخطأ ---
 def load_lottie(url):
     try:
         r = requests.get(url, timeout=5)
@@ -76,22 +79,20 @@ def load_lottie(url):
     except:
         return None
 
-# --- 3. التصميم (تعديل الخطوط للموبايل فقط) ---
+# --- 3. التصميم ---
 st.markdown("""
     <style>
     .stApp { background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%); overflow-x: hidden; }
     
-    /* جعل العنوان مرناً حسب شاشة الهاتف */
     .main-title { 
         color: #ffffff; 
         text-align: center; 
-        font-size: clamp(24px, 8vw, 35px); /* يتغير حجمه آلياً حسب الشاشة */
+        font-size: clamp(24px, 8vw, 35px); 
         font-weight: 900; 
         text-shadow: 0 0 20px rgba(255, 215, 0, 0.6); 
         padding: 10px; 
     }
     
-    /* تعديل زر نعم ليكون مريحاً للموبايل */
     div.stButton > button:first-child { 
         background: linear-gradient(45deg, #ffd700, #ffae00) !important; 
         color: #5d001e !important; 
@@ -104,7 +105,6 @@ st.markdown("""
         margin: 0 auto; 
     }
     
-    /* تعديل النص تحت العنوان */
     .sub-text {
         text-align: center; 
         font-size: clamp(16px, 5vw, 20px); 
@@ -128,7 +128,6 @@ if not st.session_state.clicked_yes:
         send_detailed_alert("yes")
         st.rerun()
 
-    # جافاسكريبت الخاص بك كما هو
     escape_html = """
     <div id="box" style="height: 150px; width: 100%; position: relative; text-align: center; z-index: 10;">
         <button id="noBtn" style="padding: 10px 30px; font-size: 16px; background-color: rgba(255,255,255,0.2); color: white; border: 2px solid white; border-radius: 50px; position: absolute; transition: 0.1s; cursor: pointer; left: 50%; transform: translateX(-50%); touch-action: none;">لا ❌</button>
